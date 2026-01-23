@@ -2,7 +2,6 @@ import { defineConfig } from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  base: '/personal-website/',
   title: "Vinayak Goyal",
   description: "Personal Website",
   themeConfig: {
