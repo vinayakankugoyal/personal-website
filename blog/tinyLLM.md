@@ -820,6 +820,7 @@ And that's it folks!
 
 For my next post I will be adding KV caching to this implementation to see if we can speed up inference (the `generate` function).
 
+## References
 
 [^1]: Ain't nothing wrong with using coding agents!
 [^2]: Popular ones include BPE (Byte Pair Encoding) used by GPT models, SentencePiece used by LLaMA, and tiktoken by OpenAI. They're way smarter than character-level tokenization but harder to implement from scratch.
