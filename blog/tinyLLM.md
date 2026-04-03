@@ -792,7 +792,6 @@ def generate(params, prompt, rand_key):
 
         print(decoded_prediction, end="", flush=True)
 
-
 prompt = input("> ")
 
 generate(params, prompt, rand_key)
