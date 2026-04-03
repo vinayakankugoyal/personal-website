@@ -776,26 +776,18 @@ Let's generate some text!
 ```python
 
 def generate(params, prompt, rand_key):
-
     for i in range(len(prompt), CONTEXT_LENGTH):
-        encoded_prompt = encode(prompt)
-
-        encoded_prompt = jax.numpy.array(encoded_prompt)
-
+        encoded_prompt = jax.numpy.array(encode(prompt))
         padded = jax.numpy.zeros((CONTEXT_LENGTH,), dtype=jax.numpy.int32)
-
         inputs = padded.at[0:len(prompt)].set(encoded_prompt)
 
         logist = forward(params, inputs[None, :])
-
         predictions = logist[0, len(prompt) - 1]
 
         rand_key, subkey = jax.random.split(rand_key)
-
         prediction = jax.random.categorical(subkey, predictions / 0.8)
 
         decoded_prediction = decode([int(prediction)])
-
         prompt += decoded_prediction
 
         print(decoded_prediction, end="", flush=True)
