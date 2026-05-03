@@ -10,7 +10,7 @@ layout: doc
 
 I like breaking things to understand how they work, then making them harder to break. I currently do that on the Google Kubernetes Security team hardening GKE and OSS Kubernetes. I have a Masters in CS from USC, where I took enough operating systems and distributed systems classes to mass produce kernel panics across multiple nodes 😛
 
-When I'm not staring at YAML, I'm getting strangled at jiujitsu or pedaling up hills that looked much smaller on the map.
+When I'm not staring at YAML, I'm getting strangled at jiujitsu 🥋, pedaling up hills that looked much smaller on the map 🚴, or losing sleep over sci-fi books 📚.
 
 
 Here's my [CV](https://docs.google.com/document/d/1S-Poqzq0x-PwIu9APZ6hul3rkC5CbiZQ9tDGx792G94/edit?usp=sharing).
