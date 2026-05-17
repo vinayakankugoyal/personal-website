@@ -22,3 +22,7 @@ Here's my [CV](https://docs.google.com/document/d/1S-Poqzq0x-PwIu9APZ6hul3rkC5Cb
 
 **Least Privilege Containers: Keeping a Bad Day from Getting Worse** - KubeCon EU 2023
 [Watch](https://www.youtube.com/watch?v=uouH9fsWVIE)
+
+## Publications
+
+**Kubelet Fine Grained Authorization**: https://kubernetes.io/blog/2026/04/24/kubernetes-v1-36-fine-grained-kubelet-authorization-ga/
