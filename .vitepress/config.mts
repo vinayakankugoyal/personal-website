@@ -20,7 +20,8 @@ export default defineConfig({
         text: 'Blog',
         items: [
           { text: 'Tiny LLM', link: '/blog/tinyLLM' },
-          { text: 'Tiny LLM go brrrrr', link: '/blog/KVCache' }
+          { text: 'Tiny LLM go brrrrr', link: '/blog/KVCache' },
+          { text: 'Tiny LLM gets a real tokenizer', link: '/blog/BPE' }
         ]
       }
     ],
