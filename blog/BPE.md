@@ -1,6 +1,7 @@
 ---
 layout: doc
 title: Tiny LLM gets a real tokenizer
+date: 2026-05-18
 ---
 
 # Tiny LLM gets a real tokenizer

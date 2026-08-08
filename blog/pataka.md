@@ -1,5 +1,7 @@
 ---
 layout: doc
+title: "Pataka: Booting Linux in a VM in Long Mode"
+date: 2026-07-02
 ---
 
 # Pataka: Booting Linux in a VM in Long Mode

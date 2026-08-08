@@ -1,5 +1,7 @@
 ---
 layout: doc
+title: Tiny LLM
+date: 2026-03-30
 ---
 
 # Tiny LLM

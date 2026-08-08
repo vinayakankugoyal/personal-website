@@ -1,5 +1,7 @@
 ---
 layout: doc
+title: Tiny LLM go brrrrr
+date: 2026-03-31
 ---
 
 # Tiny LLM go brrrrr
