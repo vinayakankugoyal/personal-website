@@ -21,7 +21,8 @@ export default defineConfig({
         items: [
           { text: 'Tiny LLM', link: '/blog/tinyLLM' },
           { text: 'Tiny LLM go brrrrr', link: '/blog/KVCache' },
-          { text: 'Tiny LLM gets a real tokenizer', link: '/blog/BPE' }
+          { text: 'Tiny LLM gets a real tokenizer', link: '/blog/BPE' },
+          { text: 'Booting Linux in a microVM in long mode', link: '/blog/pataka' }
         ]
       }
     ],
