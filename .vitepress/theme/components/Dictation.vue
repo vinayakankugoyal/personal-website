@@ -9,7 +9,6 @@ const SAMPLE_RATE = 16000
 
 const HINTS = {
   loading: 'Downloading speech model...',
-  ready: 'Hold space to talk',
   recording: 'Listening...',
   transcribing: 'Transcribing...',
   error: '',
@@ -21,10 +20,15 @@ const errorMessage = ref('')
 const progress = ref(0)             // 0–100, model download
 const paragraphs = ref([])          // { datetime, time, text }
 const transcript = ref(null)
+const hasKeyboard = ref(false)      // fine pointer + hover: worth mentioning the space bar
 
-const hint = computed(() =>
-  state.value === 'error' ? errorMessage.value : HINTS[state.value]
-)
+const hint = computed(() => {
+  if (state.value === 'error') return errorMessage.value
+  if (state.value === 'ready') {
+    return hasKeyboard.value ? 'Hold the button or space bar to talk' : 'Hold to talk'
+  }
+  return HINTS[state.value]
+})
 
 function setState(next, detail) {
   state.value = next
@@ -93,10 +97,7 @@ function clear() {
   paragraphs.value = []
 }
 
-async function onKeyDown(event) {
-  if (event.target.isContentEditable) return   // typing a correction, not talking
-  if (event.code !== 'Space' || event.repeat) return
-  event.preventDefault()
+async function pressStart() {
   if (state.value !== 'ready') return
   try {
     await startRecording()
@@ -106,9 +107,7 @@ async function onKeyDown(event) {
   }
 }
 
-function onKeyUp(event) {
-  if (event.target.isContentEditable) return
-  if (event.code !== 'Space') return
+function pressEnd() {
   if (state.value !== 'recording') return
   stopRecording()
 
@@ -122,7 +121,35 @@ function onKeyUp(event) {
   worker.postMessage({ type: 'transcribe', audio }, [audio.buffer])
 }
 
+function onKeyDown(event) {
+  if (event.target.isContentEditable) return   // typing a correction, not talking
+  if (event.code !== 'Space' || event.repeat) return
+  event.preventDefault()
+  pressStart()
+}
+
+function onKeyUp(event) {
+  if (event.target.isContentEditable) return
+  if (event.code !== 'Space') return
+  pressEnd()
+}
+
+// The round button: pointer capture keeps the press alive even when the
+// finger drifts off the circle, and pointercancel (incoming call, gesture)
+// ends it cleanly instead of leaving the mic open.
+function onButtonDown(event) {
+  event.preventDefault()                       // no focus ring / text selection on touch
+  event.currentTarget.setPointerCapture?.(event.pointerId)
+  pressStart()
+}
+
+function onButtonUp() {
+  pressEnd()
+}
+
 onMounted(async () => {
+  hasKeyboard.value = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+
   worker = new Worker(withBase('/dictation/worker.js'), { type: 'module' })
   worker.onmessage = ({ data }) => {
     if (data.type === 'progress') progress.value = data.progress ?? 0
@@ -188,6 +215,25 @@ onUnmounted(() => {
     </div>
 
     <div class="status">
+      <button
+        type="button"
+        class="talk"
+        aria-label="Hold to talk"
+        :aria-pressed="state === 'recording'"
+        :disabled="state !== 'ready' && state !== 'recording'"
+        @pointerdown="onButtonDown"
+        @pointerup="onButtonUp"
+        @pointercancel="onButtonUp"
+        @contextmenu.prevent
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+          <line x1="12" y1="19" x2="12" y2="23" />
+          <line x1="8" y1="23" x2="16" y2="23" />
+        </svg>
+      </button>
       <p class="hint">{{ hint }}</p>
       <progress v-if="state === 'loading'" class="progress" max="100" :value="progress"></progress>
     </div>
@@ -300,6 +346,57 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
+/* The round push-to-talk button. */
+.talk {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 14px;
+  border: 0;
+  border-radius: 50%;
+  color: var(--vp-c-brand-1);
+  background: var(--vp-c-brand-soft);
+  cursor: pointer;
+  touch-action: none;              /* the press must not start a scroll */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+.talk svg {
+  width: 30px;
+  height: 30px;
+}
+.talk:disabled {
+  color: var(--vp-c-text-3);
+  background: var(--vp-c-default-soft);
+  cursor: default;
+}
+.talk:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 3px;
+}
+@media (hover: hover) {
+  .talk:hover:not(:disabled) {
+    background: var(--vp-c-brand-soft);
+    transform: scale(1.05);
+  }
+}
+.is-recording .talk {
+  color: var(--vp-c-white, #fff);
+  background: var(--vp-c-brand-1);
+  transform: scale(1.08);
+  animation: talk-pulse 1.4s ease-out infinite;
+}
+@keyframes talk-pulse {
+  0% { box-shadow: 0 0 0 0 var(--vp-c-brand-soft); }
+  100% { box-shadow: 0 0 0 18px transparent; }
+}
+
 .hint {
   margin: 0;
   color: var(--vp-c-text-2);
@@ -362,6 +459,8 @@ onUnmounted(() => {
   .hint::before { animation: none; }
   .hint { transition: none; }
   .progress::-webkit-progress-value { transition: none; }
+  .talk { transition: none; animation: none; }
+  .is-recording .talk { transform: none; animation: none; }
 }
 
 @media (max-width: 600px) {
