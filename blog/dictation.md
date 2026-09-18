@@ -18,6 +18,7 @@ import Dictation from '../.vitepress/theme/components/Dictation.vue'
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - var(--vp-nav-height));
+  min-height: calc(100dvh - var(--vp-nav-height));   /* mobile: exclude the browser's toolbars */
 }
 .dictation-lead {
   margin: 0;

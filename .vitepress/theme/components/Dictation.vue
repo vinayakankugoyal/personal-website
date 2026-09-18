@@ -22,9 +22,14 @@ const progress = ref(0)             // 0–100, model download
 const paragraphs = ref([])          // { datetime, time, text }
 const transcript = ref(null)
 
-const hint = computed(() =>
-  state.value === 'error' ? errorMessage.value : HINTS[state.value]
-)
+// No space bar to hold on a phone.
+const touch = window.matchMedia('(pointer: coarse)').matches
+
+const hint = computed(() => {
+  if (state.value === 'error') return errorMessage.value
+  if (state.value === 'ready' && touch) return 'Hold the button to talk'
+  return HINTS[state.value]
+})
 
 function setState(next, detail) {
   state.value = next
@@ -51,10 +56,11 @@ function resetSession() {
 }
 
 async function startRecording() {
+  const resumed = ctx.resume()   // iOS only allows this inside the gesture, so before any await
   session.stream = await navigator.mediaDevices.getUserMedia({ audio: true })
   session.source = ctx.createMediaStreamSource(session.stream)
   session.source.connect(audioNode)
-  await ctx.resume()
+  await resumed
 }
 
 function stopRecording() {
@@ -93,22 +99,30 @@ function clear() {
   paragraphs.value = []
 }
 
-async function onKeyDown(event) {
-  if (event.target.isContentEditable) return   // typing a correction, not talking
-  if (event.code !== 'Space' || event.repeat) return
-  event.preventDefault()
-  if (state.value !== 'ready') return
+// press/release are shared by the space bar and the on-screen button.
+let held = false
+
+async function press() {
+  if (held || state.value !== 'ready') return
+  held = true
   try {
     await startRecording()
-    setState('recording')
   } catch {
-    setState('error', 'Microphone access was blocked. Allow it in the address bar and reload.')
+    held = false
+    setState('error', 'Microphone access was blocked. Allow it in your browser settings and reload.')
+    return
   }
+  if (!held) {                  // let go while the permission prompt was up
+    stopRecording()
+    resetSession()
+    return
+  }
+  setState('recording')
 }
 
-function onKeyUp(event) {
-  if (event.target.isContentEditable) return
-  if (event.code !== 'Space') return
+function release() {
+  if (!held) return
+  held = false
   if (state.value !== 'recording') return
   stopRecording()
 
@@ -120,6 +134,25 @@ function onKeyUp(event) {
   }
   setState('transcribing')
   worker.postMessage({ type: 'transcribe', audio }, [audio.buffer])
+}
+
+function onKeyDown(event) {
+  if (event.target.isContentEditable) return   // typing a correction, not talking
+  if (event.code !== 'Space' || event.repeat) return
+  event.preventDefault()
+  press()
+}
+
+function onKeyUp(event) {
+  if (event.target.isContentEditable) return
+  if (event.code !== 'Space') return
+  release()
+}
+
+function onPointerDown(event) {
+  if (event.button !== 0) return
+  event.currentTarget.setPointerCapture(event.pointerId)   // keep the release even if the finger slides off
+  press()
 }
 
 onMounted(async () => {
@@ -153,12 +186,14 @@ onMounted(async () => {
 
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('keyup', onKeyUp)
+  window.addEventListener('blur', release)   // the keyup never arrives if focus leaves mid-press
 })
 
 onUnmounted(() => {
   disposed = true
   window.removeEventListener('keydown', onKeyDown)
   window.removeEventListener('keyup', onKeyUp)
+  window.removeEventListener('blur', release)
   stopRecording()
   resetSession()
   worker?.terminate()
@@ -190,6 +225,23 @@ onUnmounted(() => {
     <div class="status">
       <p class="hint">{{ hint }}</p>
       <progress v-if="state === 'loading'" class="progress" max="100" :value="progress"></progress>
+      <button
+        v-if="state !== 'error'"
+        type="button"
+        class="talk"
+        aria-label="Hold to talk"
+        :aria-pressed="state === 'recording'"
+        :disabled="state !== 'ready' && state !== 'recording'"
+        @pointerdown="onPointerDown"
+        @pointerup="release"
+        @pointercancel="release"
+        @contextmenu.prevent
+      >
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="9" y="3" width="6" height="11" rx="3" />
+          <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+        </svg>
+      </button>
     </div>
   </div>
 </template>
@@ -294,7 +346,7 @@ onUnmounted(() => {
   position: sticky;
   bottom: 0;
   margin-top: auto;
-  padding: 20px 24px 28px;
+  padding: 20px 24px calc(28px + env(safe-area-inset-bottom));
   text-align: center;
   background: linear-gradient(to top, var(--vp-c-bg) 60%, transparent);
   pointer-events: none;
@@ -336,6 +388,46 @@ onUnmounted(() => {
   margin-inline: auto;
 }
 
+.talk {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  margin: 18px auto 0;
+  padding: 0;
+  border: 2px solid var(--vp-c-brand-1);
+  border-radius: 50%;
+  color: var(--vp-c-brand-1);
+  background: var(--vp-c-bg);
+  cursor: pointer;
+  pointer-events: auto;          /* .status ignores the pointer, the button must not */
+  touch-action: none;            /* a hold is not a scroll or a zoom */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.talk:focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 4px;
+}
+.talk:disabled {
+  color: var(--vp-c-text-3);
+  border-color: var(--vp-c-divider);
+  cursor: default;
+}
+.is-recording .talk {
+  color: var(--vp-c-bg);
+  background: var(--vp-c-brand-1);
+  transform: scale(1.08);
+  animation: ring 1.4s ease-out infinite;
+}
+@keyframes ring {
+  from { box-shadow: 0 0 0 0 var(--vp-c-brand-soft); }
+  to   { box-shadow: 0 0 0 22px transparent; }
+}
+
 .progress {
   display: block;
   width: min(320px, 70vw);
@@ -361,11 +453,15 @@ onUnmounted(() => {
 @media (prefers-reduced-motion: reduce) {
   .hint::before { animation: none; }
   .hint { transition: none; }
+  .talk { transition: none; }
+  .is-recording .talk { animation: none; }
   .progress::-webkit-progress-value { transition: none; }
 }
 
 @media (max-width: 600px) {
-  .transcript { font-size: 1rem; }
+  .dictation:not(.has-text) .hint { font-size: 1.35rem; }
+  .dictation.is-error .hint { font-size: 1.05rem; }
+  .transcript { font-size: 1rem; padding: 4vh 20px 8vh; }
   .transcript p { grid-template-columns: 1fr; }
   .transcript time { display: none; }
 }
