@@ -35,7 +35,8 @@ export default defineConfig({
           { text: 'Tiny LLM gets a real tokenizer', link: '/blog/BPE' },
           { text: 'Booting Linux in a microVM in long mode', link: '/blog/pataka' },
           { text: 'Inverse Kinematics', link: '/blog/arm' },
-          { text: 'WebGPU Dictation', link: '/blog/dictation' }
+          { text: 'WebGPU Dictation', link: '/blog/dictation' },
+          { text: 'Bike Lane Dash', link: '/blog/bikelane' }
         ]
       }
     ],
