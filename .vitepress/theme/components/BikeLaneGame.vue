@@ -10,6 +10,8 @@ const blocks = ref('0.0')
 const bagels = ref(0)
 const best = ref('0.0')
 const lesson = ref(null)
+// hazards you got past this run, most first
+const dodged = ref([])
 
 // what each obstacle teaches when it takes you out
 const LESSONS = {
@@ -48,6 +50,75 @@ const LESSONS = {
 }
 
 const BEST_KEY = 'bike-lane-dash-best'
+
+// [one, many]
+const DODGE_LABELS = {
+  door: ['car door', 'car doors'],
+  police: ['cop car', 'cop cars'],
+  truck: ['truck', 'trucks'],
+  taxi: ['cab', 'cabs'],
+  ped: ['pedestrian', 'pedestrians'],
+  ebike: ['wrong-way rider', 'wrong-way riders'],
+  pothole: ['pothole', 'potholes'],
+  car: ['stopped car', 'stopped cars'],
+}
+
+// shown on the crash screen; every figure links to where it came from
+const STATS = [
+  {
+    value: '30',
+    label: 'people killed riding bikes in NYC in 2023, the most in over two decades',
+    source: 'https://www.fox5ny.com/news/nyc-cyclist-deaths-hit-record-high-in-2023',
+  },
+  {
+    value: '23',
+    label: 'of those 30 were riding e-bikes',
+    source: 'https://www.cbsnews.com/newyork/news/in-response-to-numerous-fatalities-new-york-city-launches-e-bike-safety-education-campaign',
+  },
+  {
+    value: '~400',
+    label: 'bike riders seriously injured in NYC that same year',
+    source: 'https://bronx.news12.com/record-levels-of-cyclist-deaths-for-nyc-in-2023',
+  },
+  {
+    value: '1.9%',
+    label: 'of 76,000+ complaints to 311 about blocked bike lanes ended in a ticket (2016 to 2023)',
+    source: 'https://usa.streetsblog.org/2023/04/06/cops-in-nyc-ticket-only-2-of-blocked-bike-lanes-analysis',
+  },
+]
+
+const RULES = [
+  {
+    cite: 'NY VTL §1214',
+    text: 'No one may open a car door on the traffic side until it is reasonably safe to do so.',
+    source: 'https://newyork.public.law/laws/n.y._vehicle_and_traffic_law_section_1214',
+  },
+  {
+    cite: '34 RCNY §4-08(e)',
+    text: 'Stopping, standing, or parking in a bike lane is banned, with a $115 fine.',
+    source: 'https://usa.streetsblog.org/2023/04/06/cops-in-nyc-ticket-only-2-of-blocked-bike-lanes-analysis',
+  },
+  {
+    cite: '34 RCNY §4-12(p)',
+    text: 'Ride in the bike lane when there is one, but you may leave it to turn or when it is blocked or unsafe.',
+    source: 'https://nyc.gov/html/dot/downloads/pdf/bicyclerules-english.pdf',
+  },
+  {
+    cite: 'NY VTL §1236',
+    text: 'At night you need a white front light visible from 500 ft and a red or amber rear light visible from 300 ft.',
+    source: 'https://newyork.public.law/laws/n.y._vehicle_&_traffic_law_section_1236',
+  },
+  {
+    cite: 'NY VTL §1238',
+    text: 'Riders and passengers under 14 must wear a helmet.',
+    source: 'https://healthweb-back.health.ny.gov/publications/0667.pdf',
+  },
+  {
+    cite: 'NYC e-bike limit',
+    text: 'Since October 24, 2025, e-bikes and e-scooters are capped at 15 mph citywide.',
+    source: 'https://ny1.com/nyc/all-boroughs/news/2025/10/24/new-15-mile-per-hour-speed-limit-for-e-bikes-goes-into-effect',
+  },
+]
 
 // set up in onMounted; the template calls these
 let startGame = () => {}
@@ -110,6 +181,7 @@ onMounted(() => {
   let bagelCount = 0
   let rowAccum = 0
   let nextGap = 0
+  let dodgeCounts = {}
 
   const player = { lane: 1, x: 0, y: 0, vy: 0, lean: 0, pedal: 0 }
 
@@ -414,6 +486,7 @@ onMounted(() => {
     bagelCount = 0
     rowAccum = 0
     nextGap = speed * 2.5 // a couple of calm seconds to start
+    dodgeCounts = {}
     blocks.value = '0.0'
     bagels.value = 0
   }
@@ -430,6 +503,9 @@ onMounted(() => {
     mode = 'crashing'
     crashTimer = 0.8
     lesson.value = { kind, ...LESSONS[kind] }
+    dodged.value = Object.entries(dodgeCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([k, count]) => ({ label: DODGE_LABELS[k][count === 1 ? 0 : 1], count }))
     if (dist > bestDist) {
       bestDist = dist
       try {
@@ -518,6 +594,20 @@ onMounted(() => {
     lampFront -= dz
     buildFront[-1] -= dz
     buildFront[1] -= dz
+    if (mode === 'playing') {
+      for (const o of obstacles) {
+        if (!o.passed && o.z + o.d < -0.5) {
+          o.passed = true
+          dodgeCounts[o.kind] = (dodgeCounts[o.kind] || 0) + 1
+        }
+      }
+      for (const c of parked) {
+        if (c.door && !c.passed && c.z + 2.2 < -0.5) {
+          c.passed = true
+          dodgeCounts.door = (dodgeCounts.door || 0) + 1
+        }
+      }
+    }
     parked = parked.filter((c) => c.z + 2.2 > Z_NEAR - 1)
     buildings = buildings.filter((b) => b.z + b.d > Z_NEAR - 1)
     lamps = lamps.filter((l) => l.z > Z_NEAR - 1)
@@ -1137,14 +1227,44 @@ onMounted(() => {
     </div>
 
     <div v-if="phase === 'crashed' && lesson" class="overlay">
-      <div class="card">
+      <div class="card card-wide">
         <p class="eyebrow">You crashed</p>
         <h2>{{ lesson.title }}</h2>
         <p>{{ lesson.text }}</p>
-        <p class="stats">
-          {{ blocks }} blocks · 🥯 {{ bagels }} · best {{ best }} blocks
+
+        <h3>Your ride</h3>
+        <dl class="run">
+          <div><dt>Blocks</dt><dd>{{ blocks }}</dd></div>
+          <div><dt>Bagels</dt><dd>{{ bagels }}</dd></div>
+          <div><dt>Best</dt><dd>{{ best }}</dd></div>
+        </dl>
+        <p v-if="dodged.length" class="dodged">
+          You got past
+          <template v-for="(d, i) in dodged" :key="d.label">
+            <strong>{{ d.count }} {{ d.label }}</strong>{{ i < dodged.length - 2 ? ', ' : i === dodged.length - 2 ? ' and ' : '' }}
+          </template>
+          before this one.
         </p>
-        <button type="button" @click="start">Ride again</button>
+
+        <h3>By the numbers</h3>
+        <ul class="facts">
+          <li v-for="f in STATS" :key="f.value">
+            <span class="fact-value">{{ f.value }}</span>
+            <span>{{ f.label }} <a :href="f.source" target="_blank" rel="noopener">source</a></span>
+          </li>
+        </ul>
+
+        <h3>The rules</h3>
+        <ul class="rules">
+          <li v-for="r in RULES" :key="r.cite">
+            <a class="cite" :href="r.source" target="_blank" rel="noopener">{{ r.cite }}</a>
+            <span>{{ r.text }}</span>
+          </li>
+        </ul>
+
+        <div class="again">
+          <button type="button" @click="start">Ride again</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1210,6 +1330,109 @@ canvas {
   color: #f2f2f2;
   font-size: 15px;
   line-height: 1.5;
+}
+
+.card-wide {
+  max-width: 540px;
+  padding-bottom: 0;
+}
+
+.card h3 {
+  margin: 18px 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9fd9b4;
+}
+
+.card a {
+  color: #9fd9b4;
+}
+
+.run {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.run div {
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.run dt {
+  font-size: 12px;
+  color: #b9bbd6;
+}
+
+.run dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dodged {
+  font-size: 14px;
+}
+
+.facts,
+.rules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.facts li,
+.rules li {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 4.2rem 1fr;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.fact-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ff8a73;
+  font-variant-numeric: tabular-nums;
+}
+
+.rules li {
+  grid-template-columns: 7.5rem 1fr;
+}
+
+.rules .cite {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.facts a {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.again {
+  position: sticky;
+  bottom: 0;
+  margin: 16px -22px 0;
+  padding: 12px 22px 16px;
+  background: rgba(18, 20, 40, 0.97);
+}
+
+@media (max-width: 480px) {
+  .rules li {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
 }
 
 .card h2 {
