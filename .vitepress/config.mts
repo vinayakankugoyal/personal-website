@@ -11,10 +11,12 @@ const hostname = 'https://vinayak.purelydysfunctional.com'
 export default defineConfig({
   title: "Vinayak Goyal",
   description: "Personal Website",
+  // The PICO-8 theme in .vitepress/theme/custom.css is dark-only.
+  appearance: 'force-dark',
   head: [
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
-    ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap' }],
+    ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Silkscreen&display=swap' }],
     ['link', { rel: 'alternate', type: 'application/rss+xml', title: 'Vinayak Goyal', href: `${hostname}/feed.rss` }]
   ],
   markdown: {

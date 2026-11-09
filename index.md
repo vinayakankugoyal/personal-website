@@ -2,7 +2,7 @@
 layout: doc
 ---
 
-# Vinayak Goyal
+# Vinayak Goyal <img class="p8-sprite" src="/sprite.svg" alt="">
 
 [github](https://github.com/vinayakankugoyal) · [linkedin](https://linkedin.com/in/vinayakgoyal) · [email](mailto:vinayak@purelydysfunctional.com)
 

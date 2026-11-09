@@ -1,3 +1,154 @@
+/*
+ * PICO-8 palette theme.
+ * Pixel font (Silkscreen) on headings and labels only; body stays in Lora.
+ * https://pico-8.fandom.com/wiki/Palette
+ */
 :root {
+  --p8-black: #000000;
+  --p8-dark-blue: #1d2b53;
+  --p8-dark-purple: #7e2553;
+  --p8-dark-green: #008751;
+  --p8-brown: #ab5236;
+  --p8-dark-grey: #5f574f;
+  --p8-light-grey: #c2c3c7;
+  --p8-white: #fff1e8;
+  --p8-red: #ff004d;
+  --p8-orange: #ffa300;
+  --p8-yellow: #ffec27;
+  --p8-green: #00e436;
+  --p8-blue: #29adff;
+  --p8-lavender: #83769c;
+  --p8-pink: #ff77a8;
+  --p8-peach: #ffccaa;
+
   --vp-font-family-base: 'Lora', Georgia, serif;
+  --p8-font-pixel: 'Silkscreen', ui-monospace, monospace;
+}
+
+/* The site is forced dark (appearance: 'force-dark' in config), so the
+   palette lives on .dark. */
+.dark {
+  --vp-c-bg: var(--p8-dark-blue);
+  --vp-c-bg-alt: var(--p8-black);
+  --vp-c-bg-elv: var(--p8-black);
+  --vp-c-bg-soft: var(--p8-black);
+
+  --vp-c-text-1: var(--p8-white);
+  --vp-c-text-2: var(--p8-light-grey);
+  --vp-c-text-3: var(--p8-lavender);
+
+  --vp-c-divider: var(--p8-dark-grey);
+  --vp-c-border: var(--p8-dark-grey);
+  --vp-c-gutter: var(--p8-black);
+
+  --vp-c-brand-1: var(--p8-blue);
+  --vp-c-brand-2: var(--p8-white);
+  --vp-c-brand-3: var(--p8-blue);
+  --vp-c-brand-soft: rgba(41, 173, 255, 0.16);
+
+  --vp-c-default-soft: rgba(194, 195, 199, 0.12);
+  --vp-c-danger-1: var(--p8-red);
+
+  --vp-nav-bg-color: var(--p8-black);
+  --vp-sidebar-bg-color: var(--p8-black);
+  --vp-code-block-bg: var(--p8-black);
+  --vp-code-bg: rgba(0, 0, 0, 0.45);
+  --vp-code-color: var(--p8-peach);
+
+  /* ::: info  →  Note callouts */
+  --vp-custom-block-info-border: transparent;
+  --vp-custom-block-info-text: var(--p8-white);
+  --vp-custom-block-info-bg: var(--p8-black);
+  --vp-custom-block-info-code-bg: rgba(41, 173, 255, 0.12);
+
+  /* ::: tip  →  Intuition callouts */
+  --vp-custom-block-tip-border: transparent;
+  --vp-custom-block-tip-text: var(--p8-white);
+  --vp-custom-block-tip-bg: var(--p8-black);
+  --vp-custom-block-tip-code-bg: rgba(255, 163, 0, 0.12);
+}
+
+/* ---------- pixel type: headings and labels only ---------- */
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3,
+.custom-block .custom-block-title,
+.VPNavBarTitle .title,
+.VPSidebarItem.level-0 > .item .text,
+.VPSidebar a.link[href="/"] > .text {
+  font-family: var(--p8-font-pixel);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+.vp-doc h1 {
+  font-size: 34px;
+  line-height: 1.2;
+  color: var(--p8-white);
+}
+
+.vp-doc h2 {
+  font-size: 20px;
+  color: var(--p8-yellow);
+  border-top: none;
+  padding-top: 0;
+  padding-bottom: 8px;
+  margin-top: 40px;
+  border-bottom: 2px solid var(--vp-c-divider);
+}
+
+.vp-doc h3 {
+  font-size: 16px;
+  color: var(--p8-yellow);
+}
+
+.VPNavBarTitle .title {
+  font-size: 16px;
+}
+
+.VPSidebarItem.level-0 > .item .text,
+.VPSidebar a.link[href="/"] > .text {
+  font-size: 13px;
+}
+
+/* sidebar: active post gets the yellow bar */
+.VPSidebar .VPSidebarItem.is-active > .item .indicator {
+  background-color: var(--p8-yellow);
+}
+.VPSidebar .VPSidebarItem.is-active > .item .link > .text {
+  color: var(--p8-yellow) !important; /* beats VitePress scoped rule */
+}
+
+/* ---------- callouts: flat box with a coloured left bar ---------- */
+.custom-block.info,
+.custom-block.tip {
+  border-radius: 0;
+  border: none;
+  border-left: 4px solid;
+}
+.custom-block.info { border-left-color: var(--p8-blue); }
+.custom-block.tip  { border-left-color: var(--p8-orange); }
+.custom-block.info .custom-block-title { color: var(--p8-blue); }
+.custom-block.tip  .custom-block-title { color: var(--p8-orange); }
+.custom-block .custom-block-title {
+  font-size: 13px;
+}
+
+/* square corners everywhere, like the rest of the pixels */
+.vp-doc div[class*='language-'],
+.vp-doc :not(pre) > code {
+  border-radius: 0;
+}
+
+/* ---------- tiny sprite next to the name on the homepage ---------- */
+.p8-sprite {
+  display: inline-block;
+  width: 32px;
+  height: 44px;
+  margin-left: 12px;
+  vertical-align: -6px;
+  image-rendering: pixelated;
 }
