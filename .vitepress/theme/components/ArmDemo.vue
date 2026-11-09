@@ -96,7 +96,7 @@ onMounted(() => {
     ctx.lineTo(baseX, canvas.height)
     ctx.setLineDash([6, 6])
     ctx.lineWidth = 1
-    ctx.strokeStyle = '#bbb'
+    ctx.strokeStyle = '#5f574f'
     ctx.stroke()
     ctx.setLineDash([])
 
@@ -108,27 +108,27 @@ onMounted(() => {
     ctx.lineWidth = 7
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
-    ctx.strokeStyle = '#444'
+    ctx.strokeStyle = '#c2c3c7'
     ctx.stroke()
 
     // base and elbow joints
     ctx.beginPath()
     ctx.arc(baseX, baseY, 8, 0, 2 * Math.PI)
     ctx.arc(elbow.x, elbow.y, 6, 0, 2 * Math.PI)
-    ctx.fillStyle = '#444'
+    ctx.fillStyle = '#c2c3c7'
     ctx.fill()
 
     // hand
     ctx.beginPath()
     ctx.arc(hand.x, hand.y, 6, 0, 2 * Math.PI)
-    ctx.fillStyle = '#d33'
+    ctx.fillStyle = '#ff004d'
     ctx.fill()
 
     // target ring
     ctx.beginPath()
     ctx.arc(targetX + baseX, targetY + baseY, 10, 0, 2 * Math.PI)
     ctx.lineWidth = 2
-    ctx.strokeStyle = '#d33'
+    ctx.strokeStyle = '#ff004d'
     ctx.stroke()
   }
 
@@ -174,8 +174,8 @@ onUnmounted(() => {
   width: 100%;
   height: 420px;
   margin: 1.5rem 0;
-  border-radius: 8px;
-  background: #fafafa;
+  border-radius: 0;
+  background: #000000;
   border: 1px solid var(--vp-c-divider);
   cursor: crosshair;
   touch-action: none;
