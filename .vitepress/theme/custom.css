@@ -142,13 +142,3 @@
 .vp-doc :not(pre) > code {
   border-radius: 0;
 }
-
-/* ---------- tiny sprite next to the name on the homepage ---------- */
-.p8-sprite {
-  display: inline-block;
-  width: 32px;
-  height: 44px;
-  margin-left: 12px;
-  vertical-align: -6px;
-  image-rendering: pixelated;
-}
