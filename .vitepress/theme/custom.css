@@ -28,7 +28,7 @@
 /* The site is forced dark (appearance: 'force-dark' in config), so the
    palette lives on .dark. */
 .dark {
-  --vp-c-bg: var(--p8-dark-blue);
+  --vp-c-bg: #1b1b1f; /* original VitePress dark background */
   --vp-c-bg-alt: var(--p8-black);
   --vp-c-bg-elv: var(--p8-black);
   --vp-c-bg-soft: var(--p8-black);
